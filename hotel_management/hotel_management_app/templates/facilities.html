@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Hotel Facilities{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <br/>
+        <h1>Facilities</h1>
+        <div class="row">
+            {% for facility in facilities %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ facility.1 }}</h5>
+                            <p class="card-text">{{ facility.2 }}</p>
+                            {% if facility.3 %}
+                                <p class="card-text text-success">Available</p>
+                            {% else %}
+                                <p class="card-text text-danger">Currently Unavailable</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

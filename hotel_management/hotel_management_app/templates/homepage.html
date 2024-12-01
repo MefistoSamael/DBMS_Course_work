@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Welcome to Sunny Beach Hotel{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <section class="hero text-center my-5">
+            <h1 class="display-4">Welcome to {{ hotel_info.name }}!</h1>
+            <p class="lead">{{ hotel_info.description }}</p>
+
+            <img src="data:image/png;base64,{{ hotel_info.image }}" alt="{{ hotel_info.name }}"
+                 class="img-fluid rounded mb-4">
+            <br/>
+            <a href="{% url 'rooms' %}" class="btn btn-primary btn-lg">Explore Our Rooms</a>
+        </section>
+
+        <section class="features text-center my-5">
+            <div class="row">
+                {% for facility in hotel_info.facilities %}
+                    <div class="col-md-4">
+                        <h3>{{ facility.name }}</h3>
+                        <p>{{ facility.description }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+{% endblock %}

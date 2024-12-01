@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">My Profile</h1>
+
+        <div class="card profile-card mx-auto shadow-lg p-4" style="width: 50%;">
+            <div id="profile-info">
+                <h2>{{ profile_data.username }}</h2>
+                <p><strong>Email:</strong> {{ profile_data.email }}</p>
+                <p><strong>First Name:</strong> {{ profile_data.first_name }}</p>
+                <p><strong>Last Name:</strong> {{ profile_data.last_name }}</p>
+                <p><strong>Phone Number:</strong> {{ profile_data.phone_number }}</p>
+                <button id="edit-info-btn" class="btn btn-primary mt-3">Edit Info</button>
+                <a href="{% url 'my_bookings' %}" class="btn btn-secondary mt-3">My Bookings</a>
+            </div>
+
+            <form id="edit-profile-form" method="POST" action="{% url 'profile' %}" style="display: none;">
+                {% csrf_token %}
+                <div class="form-group mb-3">
+                    <label for="first_name">First Name</label>
+                    <input type="text" name="first_name" value="{{ profile_data.first_name }}" required
+                           class="form-control">
+                </div>
+                <div class="form-group mb-3">
+                    <label for="last_name">Last Name</label>
+                    <input type="text" name="last_name" value="{{ profile_data.last_name }}" required
+                           class="form-control">
+                </div>
+                <div class="form-group mb-3 custom-phone-input">
+                    <label for="phone-number">Phone Number</label>
+                    <div class="input-group" style="width: 50%;">
+                        <span class="input-group-text" style="font-size: 1.2em;">🇧🇾</span>
+                        <input id="phone-number" name="phone_number" type="tel" class="form-control"
+                               value="{{ profile_data.phone_number }}"
+                               placeholder="80291234567" maxlength="11" minlength="11" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success mt-2">Save Changes</button>
+                <button type="button" id="cancel-btn" class="btn btn-secondary mt-2">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('edit-info-btn').addEventListener('click', function () {
+            document.getElementById('profile-info').style.display = 'none';
+            document.getElementById('edit-profile-form').style.display = 'block';
+        });
+
+        document.getElementById('cancel-btn').addEventListener('click', function () {
+            document.getElementById('edit-profile-form').style.display = 'none';
+            document.getElementById('profile-info').style.display = 'block';
+        });
+
+        const phoneInput = document.getElementById('phone-number');
+        phoneInput.addEventListener('input', function () {
+            this.value = this.value.replace(/[^\d]/g, '');
+            if (this.value && !this.value.startsWith('80')) {
+                this.setCustomValidity('Phone number must start with 80');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+        phoneInput.form.addEventListener('submit', function (event) {
+            if (!phoneInput.value.startsWith('80')) {
+                event.preventDefault();
+                phoneInput.setCustomValidity('Phone number must start with 80');
+            } else {
+                phoneInput.setCustomValidity('');
+            }
+        });
+    </script>
+{% endblock %}

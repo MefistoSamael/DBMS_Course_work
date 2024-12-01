@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1>Room {{ room.1 }}</h1>
+
+        {% if room.7 %}
+            <p>{{ room.7 }}</p>
+        {% endif %}
+
+        {% if images %}
+            <h3>Images</h3>
+            <div class="mb-4">
+                {% for image in images %}
+                    <img src="data:image/jpeg;base64,{{ image }}" alt="Room Image"
+                         class="img-thumbnail me-2 my-2" style="max-width: 300px;">
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <h3>Details</h3>
+        <div class="card mb-4">
+            <div class="card-body">
+                <p class="card-text"><strong>Type:</strong> {{ room.2 }}</p>
+                <p class="card-text"><strong>Capacity:</strong> {{ room.3 }}</p>
+                <p class="card-text"><strong>Price per Night:</strong> ${{ room.4 }}</p>
+                <p class="card-text"><strong>Status:</strong> {% if room.5 %} Available {% else %} Not
+                    Available {% endif %}</p>
+                <p class="card-text"><strong>Location:</strong> {{ room.6 }}</p>
+                <p class="card-text"><strong>Average Rating:</strong> {{ average_rating|default:"No ratings yet." }}</p>
+            </div>
+        </div>
+
+        {% if amenities %}
+            <h3>Amenities</h3>
+            {% for name, description in amenities %}
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <p><strong>{{ name }}</strong></p>
+                        <span>&emsp;{{ description }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if feedback %}
+            <h3>Feedback</h3>
+            {% for updated_at, rating, comments in feedback %}
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <p><strong>Date:</strong> {{ updated_at }}</p>
+                        <p><strong>Rating:</strong> {{ rating }}</p>
+                        {% if comments %}<span>{{ comments }}</span>{% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Booking Button -->
+        {% if not is_admin %}
+            <button id="bookNowButton" class="btn btn-primary">Book now</button>
+            <!-- Booking Modal -->
+            <div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="bookingModalLabel">Book this Room</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="bookingForm" method="post" action="{% url 'room_details' room.0 %}">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="date_range" class="form-label">Check-In and Check-Out Dates</label>
+                                    <input type="text" class="form-control" id="date_range" name="date_range" required
+                                           placeholder="Select Dates">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Confirm Booking</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <script>
+            document.getElementById("bookNowButton").addEventListener("click", function () {
+                const isGuest = {{ is_guest|yesno:"true,false" }};
+                if (isGuest) {
+                    new bootstrap.Modal(document.getElementById('bookingModal')).show();
+                } else {
+                    const currentUrl = encodeURIComponent(window.location.href);
+                    window.location.href = `{% url 'login' %}?next=${currentUrl}`;
+                }
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const dateRangeInput = document.querySelector("#date_range");
+
+                flatpickr(dateRangeInput, {
+                    mode: "range",
+                    dateFormat: "Y-m-d",
+                    minDate: "{{ current_date }}",
+                    onClose: function (selectedDates) {
+                        if (selectedDates.length === 1) {
+                            const startDate = selectedDates[0].toISOString().split('T')[0];
+                            dateRangeInput.value = startDate + ' to ' + startDate;
+                        }
+                    }
+                });
+            });
+        </script>
+    </div>
+{% endblock %}

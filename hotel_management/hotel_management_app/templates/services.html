@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Service Listing{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <br/>
+        <h1>Services</h1>
+        <br/>
+
+        <div class="row">
+            {% for service in services %}
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ service.1 }}</h5>
+                            <p class="card-text">{{ service.2 }}</p>
+                            <p class="card-text"><strong>Price: </strong>${{ service.3 }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-warning" role="alert">
+                        No services available.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

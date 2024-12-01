@@ -1,0 +1,13 @@
+html, body {
+    height: 100%;
+}
+
+.container {
+    min-height: calc(100vh - 100px);
+}
+
+footer {
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}

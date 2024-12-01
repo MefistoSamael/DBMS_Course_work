@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block title %}Room Listing{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <br/>
+        <h1>Rooms</h1>
+        <br/>
+
+        <div class="row">
+            <!-- Filter Form -->
+            <div class="col-md-3 mb-4">
+                <h4>Filters</h4>
+                <form method="GET">
+                    <div class="form-group mb-3">
+                        <label for="date_range">Select Date Range:</label>
+                        <input type="text" id="date_range" class="form-control" name="date_range"
+                               placeholder="Select Dates" required
+                               data-date-format="YYYY-MM-DD"
+                               autocomplete="off">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="room_type">Room Type:</label>
+                        <select name="room_type" id="room_type" class="form-control">
+                            <option value="">All</option>
+                            <option value="single" {% if filters.room_type == 'single' %}selected{% endif %}>Single
+                            </option>
+                            <option value="double" {% if filters.room_type == 'double' %}selected{% endif %}>Double
+                            </option>
+                            <option value="suite" {% if filters.room_type == 'suite' %}selected{% endif %}>Suite
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="capacity_min">Min Capacity:</label>
+                        <input type="number" name="capacity_min" id="capacity_min" class="form-control"
+                               value="{{ filters.capacity_min }}">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="capacity_max">Max Capacity:</label>
+                        <input type="number" name="capacity_max" id="capacity_max" class="form-control"
+                               value="{{ filters.capacity_max }}">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="price_min">Min Price:</label>
+                        <input type="number" name="price_min" id="price_min" class="form-control"
+                               value="{{ filters.price_min }}">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="price_max">Max Price:</label>
+                        <input type="number" name="price_max" id="price_max" class="form-control"
+                               value="{{ filters.price_max }}">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="is_available">Availability:</label>
+                        <select name="is_available" id="is_available" class="form-control">
+                            <option value="">All</option>
+                            <option value="True" {% if filters.is_available == 'True' %}selected{% endif %}>Available
+                            </option>
+                            <option value="False" {% if filters.is_available == 'False' %}selected{% endif %}>Not
+                                Available
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Amenities:</label><br>
+                        {% for amenity in all_amenities %}
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="amenity_{{ amenity.0 }}"
+                                       name="amenities" value="{{ amenity.0 }}"
+                                       {% if filters.amenities and amenity.0|stringformat:"s" in filters.amenities %}checked{% endif %}>
+                                <label class="form-check-label" for="amenity_{{ amenity.0 }}">
+                                    {{ amenity.1 }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-primary">Filter</button>
+                </form>
+            </div>
+
+            <div class="col-md-9">
+                <!-- Sorting -->
+                <div class="form-group mb-4">
+                    <label for="sortDropdown">Sort by:</label>
+                    <select id="sortDropdown" class="form-group" onchange="sortRooms(this.value)">
+                        <option value="number" {% if filters.sort_by == 'number' %}selected{% endif %}>Default
+                        </option>
+                        <option value="price_per_night&sort_order=asc"
+                                {% if filters.sort_by == 'price_per_night' and filters.sort_order == 'asc' %}selected{% endif %}>
+                            Price Ascending
+                        </option>
+                        <option value="price_per_night&sort_order=desc"
+                                {% if filters.sort_by == 'price_per_night' and filters.sort_order == 'desc' %}selected{% endif %}>
+                            Price Descending
+                        </option>
+                        <option value="avg_rating&sort_order=asc"
+                                {% if filters.sort_by == 'avg_rating' and filters.sort_order == 'asc' %}selected{% endif %}>
+                            Rating Ascending
+                        </option>
+                        <option value="avg_rating&sort_order=desc"
+                                {% if filters.sort_by == 'avg_rating' and filters.sort_order == 'desc' %}selected{% endif %}>
+                            Rating Descending
+                        </option>
+                    </select>
+                </div>
+
+
+                <!-- Rooms Display -->
+                <div class="d-flex flex-wrap" style="gap: 40px;">
+                    {% for room in rooms %}
+                        <div class="card mb-4 mr-4" style="width: 18rem;">
+                            {% if room.5 %}
+                                <img src="data:image/png;base64,{{ room.5 }}" alt="Room Image"
+                                     class="card-img-top" style="height: 200px; object-fit: cover;">
+                            {% else %}
+                                <img src="images/room.jpg" alt="Room Image" class="card-img-top"
+                                     style="height: 200px; object-fit: cover;">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title"><strong><i>Room number: {{ room.0 }}</i></strong></h5>
+                                <p class="card-text"><strong>Type:</strong> {{ room.1 }}</p>
+                                <p class="card-text"><strong>Capacity:</strong> {{ room.2 }}</p>
+                                <p class="card-text"><strong>Price per night:</strong> ${{ room.3 }}</p>
+                                <p class="card-text">
+                                    <strong>Status: </strong>
+                                    {% if room.4 %}
+                                        Available
+                                    {% else %}
+                                        Not Available
+                                    {% endif %}
+                                </p>
+                                {% if room.7 > 0 %}
+                                    <p class="card-text">
+                                        <strong>Rating: </strong> {{ room.6|floatformat:1 }} / 5
+                                    </p>
+                                {% endif %}
+                                {% if room.8 %}
+                                    <p class="card-text">
+                                        <strong>Amenities: </strong>{{ room.8 }}
+                                    </p>
+                                {% endif %}
+                                <a href="{% url 'room_details' room.9 %}" class="btn btn-primary">More info</a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-warning" role="alert">
+                                No rooms available.
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        {{ page_obj.previous_page_number }}{% for key, value in filters.items %}{% if key == 'amenities' %}{% for amenity in value %}&{{ key }}={{ amenity }}{% endfor %}{% else %}&{{ key }}={{ value }}{% endif %}{% endfor %}&date_range={{ filters.date_range }}">Previous</a>
+                            </li>
+                        {% endif %}
+
+                        {% for i in paginator.page_range %}
+                            <li class="page-item {% if page_obj.number == i %}active{% endif %}">
+                                <a class="page-link" href="?page=
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        {{ i }}{% for key, value in filters.items %}{% if key == 'amenities' %}{% for amenity in value %}&{{ key }}={{ amenity }}{% endfor %}{% else %}&{{ key }}={{ value }}{% endif %}{% endfor %}&date_range={{ filters.date_range }}">{{ i }}</a>
+                            </li>
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=
+                                        
+                                        
+                                        
+                                        
+                                        
+                                        {{ page_obj.next_page_number }}{% for key, value in filters.items %}{% if key == 'amenities' %}{% for amenity in value %}&{{ key }}={{ amenity }}{% endfor %}{% else %}&{{ key }}={{ value }}{% endif %}{% endfor %}&date_range={{ filters.date_range }}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+
+
+            </div>
+        </div>
+    </div>
+    <script>
+        function sortRooms(value) {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (value === 'number') {
+                urlParams.delete('sort_by');
+                urlParams.delete('sort_order');
+            } else {
+                const [sortBy, sortOrder] = value.split('&sort_order=');
+                urlParams.set('sort_by', sortBy);
+                urlParams.set('sort_order', sortOrder);
+            }
+            window.location.search = urlParams.toString();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const currentDate = "{{ current_date }}";
+            const dateRangeInput = document.querySelector("#date_range");
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const dateRange = urlParams.get('date_range');
+
+            if (dateRange) {
+                dateRangeInput.value = dateRange;
+            }
+
+            flatpickr(dateRangeInput, {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                minDate: currentDate,
+                onClose: function (selectedDates) {
+                    if (selectedDates.length === 1) {
+                        const startDate = selectedDates[0].toISOString().split('T')[0];
+                        dateRangeInput.value = startDate + ' to ' + startDate;
+                    }
+                }
+            });
+        });
+
+
+    </script>
+{% endblock %}

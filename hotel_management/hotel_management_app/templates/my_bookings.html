@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">My Bookings</h1>
+
+        {% if bookings %}
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Room</th>
+                    <th>Check-in Date</th>
+                    <th>Check-out Date</th>
+                    <th>Price</th>
+                    <th>Payment Status</th>
+                    <th>Actions</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for booking in bookings %}
+                    <tr>
+                        <td>{{ booking.1 }}</td>
+                        <td>{{ booking.2 }}</td>
+                        <td>{{ booking.3 }}</td>
+                        <td>{{ booking.4 }}</td>
+                        <td>{% if booking.5 %}Paid{% else %}Payment required{% endif %}</td>
+                        <td>
+                            <form method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="booking_id" value="{{ booking.0 }}">
+                                {% if not booking.5 and booking.2|date:"Y-m-d" > today|date:"Y-m-d" %}
+                                    <button type="submit" name="cancel_booking" class="btn btn-danger">Cancel</button>
+                                {% endif %}
+                            </form>
+
+                            {% if booking.5 and booking.3|date:"Y-m-d" < today|date:"Y-m-d" %}
+                                <button class="btn btn-primary" onclick="showFeedbackModal({{ booking.6 }})">Add
+                                    Feedback
+                                </button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if booking.5 %}
+                                <button class="btn btn-info" onclick="showInvoiceModal({{ booking.0 }})">View
+                                    Invoice
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-center">You have no bookings.</p>
+        {% endif %}
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" role="dialog" aria-labelledby="feedbackModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="feedbackModalLabel">Submit Feedback</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"
+                            onclick="closeFeedbackModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="feedbackForm" method="POST" action="{% url 'add_feedback' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="room_id" id="modal_booking_id">
+                        <div class="form-group">
+                            <label for="rating">Rating:</label>
+                            <input type="number" name="rating" min="0" max="5" required class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="comments">Comments:</label>
+                            <textarea name="comments" class="form-control"></textarea>
+                        </div>
+                        <br/>
+                        <button type="submit" class="btn btn-primary">Submit Feedback</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Modal -->
+    <div class="modal fade" id="invoiceModal" tabindex="-1" role="dialog" aria-labelledby="invoiceModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="invoiceModalLabel">Invoice & Payment Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeInvoiceModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Invoice Details will be loaded here via JavaScript -->
+                    <div id="invoiceDetails"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        function showFeedbackModal(bookingId) {
+            document.getElementById('modal_booking_id').value = bookingId;
+            $('#feedbackModal').modal('show');
+        }
+
+        function closeFeedbackModal() {
+            $('#feedbackModal').modal('hide');
+        }
+
+        function closeInvoiceModal() {
+            $('#invoiceModal').modal('hide'); 
+        }
+
+        function showInvoiceModal(invoiceId) {
+            fetch(`/invoices/${invoiceId}/details/`)
+                .then(response => response.json())
+                .then(data => {
+                    const detailsContainer = document.getElementById('invoiceDetails');
+                    detailsContainer.innerHTML = `
+                    <h5>Invoice ID: ${data.invoice_id}</h5>
+                    <p><strong>Total Amount:</strong> ${data.total_amount}</p>
+                    <p><strong>Issue Date:</strong> ${data.created_at}</p>
+                    <p><strong>Status:</strong> ${data.is_paid ? 'Paid' : 'Unpaid'}</p>
+                    <hr>
+                    <h5>Payments:</h5>
+                    ${data.payments.map(payment => `
+                        <p>Payment Date: ${payment.date}</p>
+                        <p>Amount: ${payment.amount}</p>
+                        <p>Method: ${payment.method}</p>
+                        <hr>
+                    `).join('')}
+                `;
+                    $('#invoiceModal').modal('show');
+                });
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+{% endblock %}
